@@ -1,0 +1,32 @@
+docker cp /mnt/c/Sources/go-coffeeshop-main/cmd/web/app/data/products.json dev-postgres:/home
+/prodocts.json
+
+create unlogged table product_import (doc json);
+
+\COPY product_import FROM 'C:\Sources\spring-coffeeshop\db\master\products.json';
+
+select * from product_import;
+
+select CAST(doc->>'type' as BIGINT), doc->>'name', CAST(doc->>'price' AS FLOAT)*100, doc->>'image' from product_import;
+
+
+create schema product;
+
+create table "product".products (
+    id bigint NOT NULL,
+    name text not null,
+    price FLOAT not null,
+    image text null,
+    created timestamp
+        with
+            time zone NOT NULL DEFAULT (now()),
+            updated timestamp
+        with
+            time zone NULL,
+            CONSTRAINT pk_products PRIMARY KEY (id)
+);
+
+insert into "product".products (id, name, price, image) 
+select CAST(doc->>'type' as BIGINT), doc->>'name', CAST(doc->>'price' AS FLOAT)*100, doc->>'image' from product_import;
+
+select * from "product".products;
